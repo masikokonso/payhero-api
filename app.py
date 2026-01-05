@@ -3,7 +3,6 @@ from flask_cors import CORS
 import requests
 import os
 from dotenv import load_dotenv
-import base64
 import json
 
 # Load environment variables
@@ -14,17 +13,8 @@ CORS(app)  # Allow JavaScript to call this API
 
 # PayHero Configuration
 PAYHERO_BASE_URL = "https://backend.payhero.co.ke/api/v2"
-API_USERNAME = os.getenv('PAYHERO_API_USERNAME')
-ACCOUNT_ID = os.getenv('PAYHERO_ACCOUNT_ID')
-CHANNEL_TYPE = os.getenv('PAYHERO_CHANNEL_TYPE')
-ACCOUNT_NUMBER = os.getenv('PAYHERO_ACCOUNT_NUMBER')
-CHANNEL_ID = os.getenv('PAYHERO_CHANNEL_ID')
-
-def get_auth_header():
-    """Create Basic Auth header for PayHero API"""
-    credentials = f"{API_USERNAME}:"
-    encoded = base64.b64encode(credentials.encode()).decode()
-    return f"Basic {encoded}"
+AUTH_TOKEN = os.getenv('PAYHERO_AUTH_TOKEN')  # Pre-encoded Basic Auth
+CHANNEL_ID = os.getenv('PAYHERO_CHANNEL_ID', '4594')
 
 
 @app.route('/', methods=['GET'])
@@ -90,9 +80,11 @@ def initiate_payment():
         
         # Make request to PayHero
         headers = {
-            'Authorization': get_auth_header(),
+            'Authorization': AUTH_TOKEN,  # Use pre-encoded token
             'Content-Type': 'application/json'
         }
+        
+        print(f"Sending payment request: {json.dumps(payload, indent=2)}")
         
         response = requests.post(
             f"{PAYHERO_BASE_URL}/payments",
@@ -100,6 +92,9 @@ def initiate_payment():
             json=payload,
             timeout=30
         )
+        
+        print(f"PayHero Response Status: {response.status_code}")
+        print(f"PayHero Response: {response.text}")
         
         # Handle response
         if response.status_code in [200, 201]:
@@ -114,7 +109,8 @@ def initiate_payment():
             return jsonify({
                 'status': 'error',
                 'message': 'Payment initiation failed',
-                'error': error_data
+                'error': error_data,
+                'status_code': response.status_code
             }), response.status_code
             
     except requests.exceptions.Timeout:
@@ -145,7 +141,7 @@ def check_payment_status(transaction_code):
     """
     try:
         headers = {
-            'Authorization': get_auth_header(),
+            'Authorization': AUTH_TOKEN,
             'Content-Type': 'application/json'
         }
         
@@ -207,8 +203,8 @@ if __name__ == '__main__':
     print("=" * 50)
     print("PayHero API Server Starting...")
     print("=" * 50)
-    print(f"API Username: {API_USERNAME[:10]}...")
     print(f"Channel ID: {CHANNEL_ID}")
+    print(f"Auth Token: {'Configured' if AUTH_TOKEN else 'Missing'}")
     print("=" * 50)
     print("\nServer running at: http://localhost:5000")
     print("\nAvailable endpoints:")
