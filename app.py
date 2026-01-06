@@ -14,7 +14,6 @@ PAYHERO_BASE_URL = "https://backend.payhero.co.ke/api/v2"
 AUTH_TOKEN = "Basic VUpXamp3ZENwcTRtbTdZcFY4MWc6MmRLakpqTkFueXpVdW1lZjUyRHFGdlJ4Snl3WGFpMVloZWRuanZmYg=="
 CHANNEL_ID = '4719'
 
-
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({
@@ -198,3 +197,4 @@ if __name__ == '__main__':
     print("=" * 50)
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+
