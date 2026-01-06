@@ -80,16 +80,21 @@ def initiate_payment():
         
         if response.status_code in [200, 201]:
             result = response.json()
-            transaction_code = result.get('CheckoutRequestID')
             
-            print(f"Transaction Code: {transaction_code}")
+            # Get Provider Reference (this is the main transaction ID)
+            provider_ref = result.get('reference')
+            checkout_id = result.get('CheckoutRequestID')
+            
+            print(f"Provider Reference: {provider_ref}")
+            print(f"CheckoutRequestID: {checkout_id}")
             
             return jsonify({
                 'status': 'success',
                 'message': 'Payment initiated successfully',
                 'data': {
-                    'transaction_code': transaction_code,
-                    'CheckoutRequestID': transaction_code,
+                    'transaction_code': provider_ref,
+                    'provider_reference': provider_ref,
+                    'checkout_request_id': checkout_id,
                     'phone_number': phone,
                     'amount': amount
                 }
@@ -121,6 +126,7 @@ def check_payment_status(transaction_code):
         print(f"=== CHECKING STATUS ===")
         print(f"Transaction Code: {transaction_code}")
         
+        # Try payment-requests endpoint first (using CheckoutRequestID)
         response = requests.get(
             f"{PAYHERO_BASE_URL}/payment-requests/{transaction_code}",
             headers=headers,
@@ -128,6 +134,17 @@ def check_payment_status(transaction_code):
         )
         
         print(f"Status Code: {response.status_code}")
+        
+        # If not found, try transactions endpoint (using provider reference)
+        if response.status_code == 404:
+            print(f"Trying transactions endpoint...")
+            response = requests.get(
+                f"{PAYHERO_BASE_URL}/transactions/{transaction_code}",
+                headers=headers,
+                timeout=30
+            )
+            print(f"Transactions Status Code: {response.status_code}")
+        
         print(f"Status Response: {response.text}")
         
         if response.status_code == 200:
