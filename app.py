@@ -27,7 +27,7 @@ def initiate_payment():
         phone = data.get('phone')
         amount = data.get('amount')
         description = data.get('description', 'Payment')
-        channel_id = data.get('channel_id', 4594)  # ← Updated to 4594
+        channel_id = data.get('channel_id', 4594)
         
         if not phone or not amount:
             return jsonify({
@@ -41,14 +41,13 @@ def initiate_payment():
         elif not phone.startswith('254'):
             phone = '254' + phone
         
-        # PayHero API request
+        # PayHero API request - FIXED payload
         payload = {
             "amount": int(amount),
             "phone_number": phone,
             "channel_id": int(channel_id),
-            "provider": "mpesa",
-            "external_reference": description,
-            "callback_url": request.host_url + "api/payment/webhook"
+            "external_reference": description
+            # Removed "provider" field - causing the constraint error
         }
         
         headers = {
@@ -58,6 +57,7 @@ def initiate_payment():
         
         print(f"=== INITIATING PAYMENT ===")
         print(f"Phone: {phone}, Amount: {amount}, Channel: {channel_id}")
+        print(f"Payload: {payload}")
         
         response = requests.post(
             f"{BASE_URL}/payments",
@@ -70,7 +70,6 @@ def initiate_payment():
         print(f"PayHero Response: {response_data}")
         
         if response.status_code in [200, 201]:
-            # Extract CheckoutRequestID from PayHero response
             checkout_request_id = response_data.get('CheckoutRequestID')
             
             return jsonify({
@@ -108,7 +107,6 @@ def check_status(checkout_request_id):
         print(f"=== CHECKING STATUS ===")
         print(f"CheckoutRequestID: {checkout_request_id}")
         
-        # PayHero status check endpoint
         response = requests.get(
             f"{BASE_URL}/payment-requests/{checkout_request_id}",
             headers=headers,
@@ -120,8 +118,6 @@ def check_status(checkout_request_id):
         
         if response.status_code == 200:
             data = response.json()
-            
-            # PayHero returns different status values
             state = data.get('state', 'PENDING')
             
             return jsonify({
