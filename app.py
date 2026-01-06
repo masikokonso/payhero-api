@@ -10,9 +10,10 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-PAYHERO_BASE_URL = "https://payhero-api.onrender.com"# "https://backend.payhero.co.ke/api/v2"
+PAYHERO_BASE_URL = "https://backend.payhero.co.ke/api/v2"
 AUTH_TOKEN = "Basic VUpXamp3ZENwcTRtbTdZcFY4MWc6MmRLakpqTkFueXpVdW1lZjUyRHFGdlJ4Snl3WGFpMVloZWRuanZmYg=="
 CHANNEL_ID = '4719'
+
 
 @app.route('/', methods=['GET'])
 def home():
@@ -64,8 +65,7 @@ def initiate_payment():
             'Content-Type': 'application/json'
         }
         
-        print(f"=== INITIATING PAYMENT ===")
-        print(f"Payload: {json.dumps(payload, indent=2)}")
+        print(f"Sending payment request: {json.dumps(payload, indent=2)}")
         
         response = requests.post(
             f"{PAYHERO_BASE_URL}/payments",
@@ -74,26 +74,21 @@ def initiate_payment():
             timeout=30
         )
         
-        print(f"Response Status: {response.status_code}")
-        print(f"Response: {response.text}")
+        print(f"PayHero Response Status: {response.status_code}")
+        print(f"PayHero Response: {response.text}")
         
         if response.status_code in [200, 201]:
             result = response.json()
             
-            # Use CheckoutRequestID for status checking (not provider_reference)
-            checkout_id = result.get('CheckoutRequestID')
-            provider_ref = result.get('reference')
-            
-            print(f"CheckoutRequestID: {checkout_id}")
-            print(f"Provider Reference: {provider_ref}")
+            # Extract CheckoutRequestID - this is the transaction code
+            transaction_code = result.get('CheckoutRequestID')
             
             return jsonify({
                 'status': 'success',
                 'message': 'Payment initiated successfully',
                 'data': {
-                    'transaction_code': checkout_id,  # ← USE CHECKOUT ID!
-                    'checkout_request_id': checkout_id,
-                    'provider_reference': provider_ref,
+                    'transaction_code': transaction_code,
+                    'CheckoutRequestID': transaction_code,
                     'phone_number': phone,
                     'amount': amount
                 }
@@ -107,7 +102,7 @@ def initiate_payment():
             }), response.status_code
             
     except Exception as e:
-        print(f"ERROR: {str(e)}")
+        print(f"Error: {str(e)}")
         return jsonify({
             'status': 'error',
             'message': str(e)
@@ -122,35 +117,23 @@ def check_payment_status(transaction_code):
             'Content-Type': 'application/json'
         }
         
-        print(f"=== CHECKING STATUS ===")
-        print(f"Transaction Code: {transaction_code}")
+        print(f"Checking status for: {transaction_code}")
         
-        # Use payment-requests endpoint (for CheckoutRequestID)
+        # Use payment-requests endpoint with CheckoutRequestID
         response = requests.get(
             f"{PAYHERO_BASE_URL}/payment-requests/{transaction_code}",
             headers=headers,
             timeout=30
         )
         
-        print(f"Status Code: {response.status_code}")
-        print(f"Status Response: {response.text}")
+        print(f"Status Response: {response.status_code}")
+        print(f"Status Data: {response.text}")
         
         if response.status_code == 200:
             result = response.json()
-            state = result.get('state', 'PENDING')
-            
-            print(f"Payment State: {state}")
-            
             return jsonify({
                 'status': 'success',
-                'data': {
-                    'transaction_code': transaction_code,
-                    'state': state,
-                    'amount': result.get('amount'),
-                    'phone_number': result.get('phone_number'),
-                    'paid': state == 'COMPLETED',
-                    'complete': state == 'COMPLETED'
-                }
+                'data': result
             }), 200
         else:
             return jsonify({
@@ -171,10 +154,7 @@ def check_payment_status(transaction_code):
 def payment_webhook():
     try:
         data = request.get_json()
-        print("=" * 50)
-        print("WEBHOOK RECEIVED")
-        print(json.dumps(data, indent=2))
-        print("=" * 50)
+        print("Webhook received:", json.dumps(data, indent=2))
         
         return jsonify({
             'status': 'success',
@@ -197,5 +177,3 @@ if __name__ == '__main__':
     print("=" * 50)
     
     app.run(debug=True, host='0.0.0.0', port=5000)
-
-
