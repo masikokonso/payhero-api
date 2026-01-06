@@ -146,11 +146,12 @@ def check_payment_status(transaction_code):
         }
         
         response = requests.get(
-            f"{PAYHERO_BASE_URL}/payments/{transaction_code}",
+            f"{PAYHERO_BASE_URL}/transaction-status?reference={transaction_code}",
             headers=headers,
             timeout=30
         )
-        
+        #let's print io response kwanza then tuone attributes
+        print("Response:", response)
         if response.status_code == 200:
             result = response.json()
             return jsonify({
@@ -215,3 +216,4 @@ if __name__ == '__main__':
     print("=" * 50)
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+
