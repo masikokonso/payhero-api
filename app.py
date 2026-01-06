@@ -27,7 +27,7 @@ def initiate_payment():
         phone = data.get('phone')
         amount = data.get('amount')
         description = data.get('description', 'Payment')
-        channel_id = data.get('channel_id', 4719)  # Default channel
+        channel_id = data.get('channel_id', 4594)  # ← Updated to 4594
         
         if not phone or not amount:
             return jsonify({
@@ -77,7 +77,7 @@ def initiate_payment():
                 "status": "success",
                 "message": "Payment initiated successfully",
                 "data": {
-                    "transaction_code": checkout_request_id,  # ← Use CheckoutRequestID
+                    "transaction_code": checkout_request_id,
                     "amount": amount,
                     "phone_number": phone,
                     "state": "PENDING"
@@ -86,7 +86,7 @@ def initiate_payment():
         else:
             return jsonify({
                 "status": "error",
-                "message": response_data.get('message', 'Payment initiation failed'),
+                "message": response_data.get('error_message', 'Payment initiation failed'),
                 "details": response_data
             }), response.status_code
             
@@ -110,7 +110,7 @@ def check_status(checkout_request_id):
         
         # PayHero status check endpoint
         response = requests.get(
-            f"{BASE_URL}/payment-requests/{checkout_request_id}",  # ← Correct endpoint!
+            f"{BASE_URL}/payment-requests/{checkout_request_id}",
             headers=headers,
             timeout=15
         )
