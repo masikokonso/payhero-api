@@ -10,8 +10,9 @@ services:
       - key: PAYHERO_ACCOUNT_ID
         value: 3844
       - key: PAYHERO_CHANNEL_TYPE
-        value: 553125
+        value: 5223949
       - key: PAYHERO_ACCOUNT_NUMBER
         value: 3844
       - key: PAYHERO_CHANNEL_ID
-        value: 4594
+
+        value: 4719
