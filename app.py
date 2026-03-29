@@ -14,7 +14,7 @@ CORS(app)  # Allow JavaScript to call this API
 # PayHero Configuration
 PAYHERO_BASE_URL = "https://backend.payhero.co.ke/api/v2"
 AUTH_TOKEN = os.getenv('PAYHERO_AUTH_TOKEN')
-CHANNEL_ID = os.getenv('PAYHERO_CHANNEL_ID', '5469')
+CHANNEL_ID = os.getenv('PAYHERO_CHANNEL_ID', '4719')
 
 
 @app.route('/', methods=['GET'])
